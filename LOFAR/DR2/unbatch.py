@@ -30,7 +30,8 @@ lout.close()
 
 
 intab=Table.read(outfile,format='ascii',delimiter=',')
-gtab=intab[intab['LRMagBoth']>1.0]
+#gtab=intab[intab['LRMagBoth']>1.0]
+gtab=intab # Commented out the line above
 sampsize = min(100, len(gtab))
 nums=np.random.choice(len(gtab),sampsize,replace=False)
 
