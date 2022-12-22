@@ -25,6 +25,12 @@ import sys
 from astropy_healpix import HEALPix
 import astropy.units as u
 
+overwrite = bool(int(os.getenv('PIPE_OVERWRITE')))
+if os.path.exists(RLF.PossHosts) and not overwrite:
+    print("Ridge LR has already been calculated for this field batch.")
+    exit()
+else:
+    print("LR Debug:", RLF.PossHosts, overwrite)
 hp = HEALPix(nside=16)
 
 fitsfile=RLF.TFC.replace('.txt','.fits')

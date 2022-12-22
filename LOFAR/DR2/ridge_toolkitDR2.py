@@ -2180,6 +2180,7 @@ def TrialSeries(available_sources, components, R, dphi, ffo):
     problem_names = np.array([str('#Source_Name'), str('Problem_Type')])
     source_counter = 1
     Error = 'N/A'
+    debug_plot = bool(int(os.getenv('DEBUG_PLOT')))
 
     # To take every source
     #for source in available_sources:
@@ -2258,48 +2259,8 @@ def TrialSeries(available_sources, components, R, dphi, ffo):
             except (ValueError, UnboundLocalError):#,TypeError, 
             
                     y, x = np.mgrid[slice((0),(area_fluxes.shape[0]),1), slice((0),(area_fluxes.shape[1]),1)]
-                    fig, ax = plt.subplots(figsize=(8,8))
-                    fig.suptitle('Source: %s' %source_name)
-                    fig.subplots_adjust(top=0.9)
-                    ax.set_aspect('equal', 'datalim')
-                    A = np.ma.array(area_fluxes, mask=np.ma.masked_invalid(area_fluxes).mask)
-                    ax.pcolor(x, y, A, cmap=palette, vmin=np.nanmin(A), vmax=np.nanmax(A))
-                    ax.scatter(float(optical_pos[0]), float(optical_pos[1]), s=130, c='m', marker='x', label='LOFAR id')
-                    ax.scatter(float(init_point[0]), float(init_point[1]), s=130, c='c', marker='x', label='Initial point')
-                    ax.set_xlim(x.min(), x.max()), ax.set_ylim(y.min(), y.max())
-                    ax.legend()
-                                           
-                    problem = np.array([str(source_name),str('Initial_Directions_Error_Occurred')])
-                    problem_names = np.vstack((problem_names, problem))
-                    fig.savefig(RLF.Probs %source_name)
-                    plt.close(fig)
-                    print('Error Occurred. No Initial Directions Found. Further Source Analysis is Aborted.')
-            
-            except (TypeError):#UnboundLocalError,TypeError, 
-            
-                    y, x = np.mgrid[slice((0),(area_fluxes.shape[0]),1), slice((0),(area_fluxes.shape[1]),1)]
-                    fig, ax = plt.subplots(figsize=(8,8))
-                    fig.suptitle('Source: %s' %source_name)
-                    fig.subplots_adjust(top=0.9)
-                    ax.set_aspect('equal', 'datalim')
-                    A = np.ma.array(area_fluxes, mask=np.ma.masked_invalid(area_fluxes).mask)
-                    ax.pcolor(x, y, A, cmap=palette, vmin=np.nanmin(A), vmax=np.nanmax(A))
-                    ax.scatter(float(optical_pos[0]), float(optical_pos[1]), s=130, c='m', marker='x', label='LOFAR id')
-                    ax.scatter(float(init_point[0]), float(init_point[1]), s=130, c='c', marker='x', label='Initial point')
-                    ax.set_xlim(x.min(), x.max()), ax.set_ylim(y.min(), y.max())
-                    ax.legend()
-                                           
-                    problem = np.array([str(source_name),str('Erosion_Error_Occurred')])
-                    problem_names = np.vstack((problem_names, problem))
-                    fig.savefig(RLF.Probs %source_name)
-                    plt.close(fig)
-                    print('Erosion Error Occurred. Further Source Analysis is Aborted.')            
-            
-            else:
-                
-                    if np.all(np.isnan(ridge1)) and np.all(np.isnan(ridge2)):
-    
-                        y, x = np.mgrid[slice((0),(area_fluxes.shape[0]),1), slice((0),(area_fluxes.shape[1]),1)]
+                    if debug_plot:
+
                         fig, ax = plt.subplots(figsize=(8,8))
                         fig.suptitle('Source: %s' %source_name)
                         fig.subplots_adjust(top=0.9)
@@ -2310,6 +2271,53 @@ def TrialSeries(available_sources, components, R, dphi, ffo):
                         ax.scatter(float(init_point[0]), float(init_point[1]), s=130, c='c', marker='x', label='Initial point')
                         ax.set_xlim(x.min(), x.max()), ax.set_ylim(y.min(), y.max())
                         ax.legend()
+                                           
+                        fig.savefig(RLF.Probs %source_name)
+                        plt.close(fig)
+
+                    print('Error Occurred. No Initial Directions Found. Further Source Analysis is Aborted.')
+                    problem = np.array([str(source_name),str('Initial_Directions_Error_Occurred')])
+                    problem_names = np.vstack((problem_names, problem))
+            
+            except (TypeError):#UnboundLocalError,TypeError, 
+            
+                    y, x = np.mgrid[slice((0),(area_fluxes.shape[0]),1), slice((0),(area_fluxes.shape[1]),1)]
+                    if debug_plot:
+                        fig, ax = plt.subplots(figsize=(8,8))
+                        fig.suptitle('Source: %s' %source_name)
+                        fig.subplots_adjust(top=0.9)
+                        ax.set_aspect('equal', 'datalim')
+                        A = np.ma.array(area_fluxes, mask=np.ma.masked_invalid(area_fluxes).mask)
+                        ax.pcolor(x, y, A, cmap=palette, vmin=np.nanmin(A), vmax=np.nanmax(A))
+                        ax.scatter(float(optical_pos[0]), float(optical_pos[1]), s=130, c='m', marker='x', label='LOFAR id')
+                        ax.scatter(float(init_point[0]), float(init_point[1]), s=130, c='c', marker='x', label='Initial point')
+                        ax.set_xlim(x.min(), x.max()), ax.set_ylim(y.min(), y.max())
+                        ax.legend()
+                        fig.savefig(RLF.Probs %source_name)
+                        plt.close(fig)
+
+                    print('Erosion Error Occurred. Further Source Analysis is Aborted.')            
+                    problem = np.array([str(source_name),str('Erosion_Error_Occurred')])
+                    problem_names = np.vstack((problem_names, problem))
+            
+            else:
+                
+                    if np.all(np.isnan(ridge1)) and np.all(np.isnan(ridge2)):
+    
+                        y, x = np.mgrid[slice((0),(area_fluxes.shape[0]),1), slice((0),(area_fluxes.shape[1]),1)]
+                        if debug_plot:
+                            fig, ax = plt.subplots(figsize=(8,8))
+                            fig.suptitle('Source: %s' %source_name)
+                            fig.subplots_adjust(top=0.9)
+                            ax.set_aspect('equal', 'datalim')
+                            A = np.ma.array(area_fluxes, mask=np.ma.masked_invalid(area_fluxes).mask)
+                            ax.pcolor(x, y, A, cmap=palette, vmin=np.nanmin(A), vmax=np.nanmax(A))
+                            ax.scatter(float(optical_pos[0]), float(optical_pos[1]), s=130, c='m', marker='x', label='LOFAR id')
+                            ax.scatter(float(init_point[0]), float(init_point[1]), s=130, c='c', marker='x', label='Initial point')
+                            ax.set_xlim(x.min(), x.max()), ax.set_ylim(y.min(), y.max())
+                            ax.legend()
+                            fig.savefig(RLF.Probs %source_name)
+                            plt.close(fig)
                         
                         #problem = np.array([str(source_name),str('%s_Error_Occurred' %Error)])
                         #problem_names = np.vstack((problem_names, problem))                       
@@ -2326,7 +2334,7 @@ def TrialSeries(available_sources, components, R, dphi, ffo):
                             problem_names = np.vstack((problem_names, problem))
                             #ax.scatter(float(optical_pos[0]), float(optical_pos[1]), c='m', s=45, label='LOFAR id')
                             #ax.scatter(float(init_point[0]), float(init_point[1]), s=130, c='c', marker='x', label='Initial point')
-                            ax.legend()
+                            #ax.legend()
 
                         else:
     
@@ -2334,8 +2342,6 @@ def TrialSeries(available_sources, components, R, dphi, ffo):
                             problem_names = np.vstack((problem_names, problem))
                             print('Optical id issue: can be out of the image')
     
-                        fig.savefig(RLF.Probs %source_name)
-                        plt.close(fig)
     
                     else:
     
@@ -2381,23 +2387,24 @@ def TrialSeries(available_sources, components, R, dphi, ffo):
                             yplotmax = ymax
                         
                         
-                        fig, ax = plt.subplots(figsize=(10,10))
-                        fig.suptitle('Source: %s' %source_name)
-                        fig.subplots_adjust(top=0.9)
-                        ax.set_aspect('equal', 'datalim')
+                        if debug_plot:
+                            fig, ax = plt.subplots(figsize=(10,10))
+                            fig.suptitle('Source: %s' %source_name)
+                            fig.subplots_adjust(top=0.9)
+                            ax.set_aspect('equal', 'datalim')
     
-                        A = np.ma.array(area_fluxes, mask=np.ma.masked_invalid(area_fluxes).mask)
-                        ax.pcolor(x, y, A, cmap=palette, vmin=np.nanmin(A), vmax=np.nanmax(A))
-                        ax.plot(ridge1[:,0], ridge1[:,1], 'r-', label='ridge 1')
-                        ax.plot(ridge2[:,0], ridge2[:,1], 'r-', label='ridge 2')
-                        #ax.scatter(float(cat_pos[0]), float(cat_pos[1]), s=130, c='m', marker='x', label='LOFAR id')
-                        #ax.scatter(float(init_point[0]), float(init_point[1]), s=130, c='c', marker='x', label='Initial point')
-                        ax.legend()
-                        ax.set_xlim(xplotmin, xplotmax)
-                        ax.set_ylim(yplotmin, yplotmax)
+                            A = np.ma.array(area_fluxes, mask=np.ma.masked_invalid(area_fluxes).mask)
+                            ax.pcolor(x, y, A, cmap=palette, vmin=np.nanmin(A), vmax=np.nanmax(A))
+                            ax.plot(ridge1[:,0], ridge1[:,1], 'r-', label='ridge 1')
+                            ax.plot(ridge2[:,0], ridge2[:,1], 'r-', label='ridge 2')
+                            #ax.scatter(float(cat_pos[0]), float(cat_pos[1]), s=130, c='m', marker='x', label='LOFAR id')
+                            #ax.scatter(float(init_point[0]), float(init_point[1]), s=130, c='c', marker='x', label='Initial point')
+                            ax.legend()
+                            ax.set_xlim(xplotmin, xplotmax)
+                            ax.set_ylim(yplotmin, yplotmax)
     
-                        fig.savefig(RLF.Rimage %(source_name, dphi))
-                        plt.close(fig)
+                            fig.savefig(RLF.Rimage %(source_name, dphi))
+                            plt.close(fig)
 
     # save the list of problematic sources in problematic_sources_list.txt
     # with source names separated from the problem type with a space.

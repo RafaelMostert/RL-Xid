@@ -65,6 +65,11 @@ newdirs=['fits','rms4','fits_cutouts','rms4_cutouts','Distances','MagnitudeColou
 
 #path=os.getcwd()
 path = os.getenv('RLDIR')
+overwrite = bool(int(os.getenv('PIPE_OVERWRITE')))
+if os.path.exists(os.path.join(path,'radio.fits')) and not overwrite:
+    print("RL setup already done for this field.")
+    exit()
+
 for d in newdirs:
     newd=path+'/'+d
     try:
@@ -135,6 +140,7 @@ print("Completed generating fits and thresholded npy cutouts.")
 
 sources.write(os.path.join(path,'radio.fits'),overwrite=True)
 
+'''
 for nrow in comps:
     cname=nrow['Component_Name']
     pname=nrow['Source_Name']
@@ -146,7 +152,6 @@ for nrow in comps:
 #comps.write('../components.fits')
 
 # Append input and output lines to RidgelineFiles template
-'''
 rlines=[l.rstrip().split(",") for l in open(inridge).readlines()]
 
 rfile=open(inridge,"a")

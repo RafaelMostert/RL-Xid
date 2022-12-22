@@ -20,6 +20,11 @@ import os
 from astropy_healpix import HEALPix
 import astropy.units as u
 
+overwrite = bool(int(os.getenv('PIPE_OVERWRITE')))
+if os.path.exists(os.path.join(os.getenv('ID_RESULTS'),"radio_filtered.fits")) and not overwrite:
+    print("Ridgeline unbatching already done for this field.")
+    exit()
+
 rfil=sys.argv[1]
 ofil=sys.argv[2]
 cfil=sys.argv[3]

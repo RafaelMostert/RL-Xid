@@ -18,8 +18,15 @@ from os.path import exists
 from astropy.table import Table
 from warnings import simplefilter, resetwarnings
 from sizeflux_tools import Flood
+from pathlib import Path
+import os
 
 simplefilter('ignore') # there is a matplotlib issue with shading on the graphs
+done_path = os.path.join(os.getenv('RLDIR'),'ridgeline_drawing_done.flag')
+overwrite = bool(int(os.getenv('PIPE_OVERWRITE')))
+if os.path.exists(done_path) and not overwrite:
+    print("Ridgelines have already been drawn for this field batch.")
+    exit()
 
 R = RLC.R
 dphi = RLC.dphi
@@ -53,6 +60,7 @@ print('Starting Ridgeline drawing process.')
 start_time = time.time()
 TrialSeries(available_sources, RLF.CompCat, R, dphi, ffo)
 print('Time taken for Ridgelines to draw = ' + str((time.time()-start_time)/(60*60)),'h')
+Path(done_path).touch()
 resetwarnings()
     
 '''
