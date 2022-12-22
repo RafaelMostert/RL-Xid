@@ -12,9 +12,8 @@ outfits=root+"_allhosts.fits"
 outrand=root+"_randhosts.fits"
 
 files=glob.glob(root+"*/hosts.csv")
-print("Combining the following hosts.csv files:", files)
+print("Unbatching ridgeline output:", files)
 lout=open(outfile,"w")
-print("Writing resulting combined file to:", outfile)
 lout.write("Source_Name,RA,DEC,UNWISE_OBJID,UID_L,LRMagBoth,PossFail\n")
 for d in files:
     lines=[l.rstrip() for l in open(d).readlines()]
@@ -44,7 +43,9 @@ gtab.rename_column('RA','optRA_RLC')
 gtab.rename_column('DEC','optDEC_RLC')
 
 gtab.write(outfits,overwrite=True)
-print("And a fits version written to:", outfile)
-print("Random test sample written to:", outrand)
+#print("And a fits version written to:", outfile)
+#print("Random test sample written to:", outrand)
 
 #print intab['LRMagBoth']
+print("Writing resulting combined file to:", outfile)
+print("All DONE.")

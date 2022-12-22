@@ -67,7 +67,7 @@ newdirs=['fits','rms4','fits_cutouts','rms4_cutouts','Distances','MagnitudeColou
 path = os.getenv('RLDIR')
 overwrite = bool(int(os.getenv('PIPE_OVERWRITE')))
 if os.path.exists(os.path.join(path,'radio.fits')) and not overwrite:
-    print("RL setup already done for this field.")
+    print("DONE: Ridgeline code setup performed in all batches.")
     exit()
 
 for d in newdirs:

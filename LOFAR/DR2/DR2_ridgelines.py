@@ -25,7 +25,7 @@ simplefilter('ignore') # there is a matplotlib issue with shading on the graphs
 done_path = os.path.join(os.getenv('RLDIR'),'ridgeline_drawing_done.flag')
 overwrite = bool(int(os.getenv('PIPE_OVERWRITE')))
 if os.path.exists(done_path) and not overwrite:
-    print("Ridgelines have already been drawn for this field batch.")
+    print("DONE: Ridgelines have been drawn.")
     exit()
 
 R = RLC.R
