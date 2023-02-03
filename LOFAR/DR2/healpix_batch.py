@@ -39,10 +39,11 @@ ccat=Table.read(cfil)
 # Filter radio catalogue for flux and size
 
 rfcut=rcat[rcat['Total_flux']>10.0]
-rmcutf=rfcut['LGZ_Width']>10.0
-rlcutf=rfcut['LGZ_Size']>30.0
-rscut=rfcut[rmcutf | rlcutf]
-print("Length of rm, rl: ",np.sum(rmcutf),np.sum(rlcutf))
+#rmcutf=rfcut['LGZ_Width']>10.0
+#rlcutf=rfcut['LGZ_Size']>60.0
+#rscut=rfcut[rmcutf | rlcutf]
+#print("Length of rm, rl: ",np.sum(rmcutf),np.sum(rlcutf))
+rscut=rfcut[rfcut['LGZ_Size']>60.0]
 
 lrad=len(rscut)
 print("Length of filtered radio catalogue is "+str(lrad))
