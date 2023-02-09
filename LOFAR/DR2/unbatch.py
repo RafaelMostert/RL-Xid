@@ -32,11 +32,10 @@ intab=Table.read(outfile,format='ascii',delimiter=',')
 #gtab=intab[intab['LRMagBoth']>1.0]
 gtab=intab # Commented out the line above
 sampsize = min(100, len(gtab))
-nums=np.random.choice(len(gtab),sampsize,replace=False)
 
-keep=gtab[nums]
-
-keep.write(outrand,overwrite=True)
+#nums=np.random.choice(len(gtab),sampsize,replace=False)
+#keep=gtab[nums]
+#keep.write(outrand,overwrite=True)
 
 gtab.remove_columns(['UID_L','PossFail'])
 gtab.rename_column('RA','optRA_RLC')
