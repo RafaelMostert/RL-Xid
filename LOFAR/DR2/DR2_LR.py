@@ -233,11 +233,15 @@ def GetLR2(fr, qm, nm,debug=False):
 
 def Getqmc(m, c):
     qmc = np.exp(kde_h.score_samples(np.array([m, c]).reshape(1, -1)))
-    return qmc * norm_h
+    norm_qmc = qmc * norm_h
+    print(f"q(m,c)=q({m},{c})={norm_qmc}")
+    return norm_qmc
 
 def Getnmc(m, c):
     nmc = np.exp(kde_o.score_samples(np.array([m, c]).reshape(1, -1)))
-    return nmc * norm_o
+    norm_nmc =  nmc * norm_o
+    print(f"n(m,c)=n({m},{c})={norm_nmc}")
+    return norm_nmc
 
 
 # Calculating the LR from the text files for the W1 band hosts

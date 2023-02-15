@@ -983,6 +983,14 @@ def CreateSubCat(source_table, lofarra, lofardec):
     return subcat
 
 #############################################
+
+def spherical_offset(ra1,dec1,ra2,dec2):
+    "Inputs are coordiantes in deg
+    output is great circle distance separation in arcsec"
+    c1 = SkyCoord(ra1, dec1, unit ='deg')  ##  Turn into a pair of 
+    c2 = SkyCoord(ra2,dec2, unit= 'deg')  ##  coordinates to use
+    return c1.separation(c2).arcsecond
+
     
 def DeltaRADEC(LOFAR_RA, LOFAR_DEC, Host_RA, Host_DEC):
     
@@ -1890,19 +1898,26 @@ def LikelihoodRatios(available_sources,debug=False):
 
             RLsigRA, RLsigDEC = SigmaR(radRAerr, radDECerr, Poss_RA_err, Poss_DEC_err)
             #RLsigRA = np.float128(0.3)
-            RLdelRA, RLdelDEC = DeltaRADEC(Ira, Idec, Poss_RA, Poss_DEC)
-            if debug: print('RLdelRA is',RLdelRA,'and RLdelDEC is',RLdelDEC)
-            RidgeRDist = LDistance(RLdelRA, RLdelDEC)
+
+            ### RM: might just as well use great circle distance
+            #RLdelRA, RLdelDEC = DeltaRADEC(Ira, Idec, Poss_RA, Poss_DEC) # inputs are in degree, output is in arcsec
+            #if debug: print('RLdelRA is',RLdelRA,'and RLdelDEC is',RLdelDEC)
+            #RidgeRDist = LDistance(RLdelRA, RLdelDEC)
+            RidgeRDist = spherical_offset(Ira, Idec, Poss_RA, Poss_DEC)
             if debug: print('RidgeRDist is',RidgeRDist,'arcsec')
             RidgeY = Lambda(RLsigRA, RLsigDEC)
 
             #optdensity = RLC.optcount / area
             optdensity = 1.0 # test
 
-            #RidgeLR = (optdensity / (np.float128(2.0) * RidgeY)) * np.exp(((RidgeRDist ** np.float128(2.0)) / np.float128(2.0)) * ((np.float128(2.0) * RidgeY) - np.float128(1.0))) # Best et al
-            RidgeLR = (np.float128(1.0) / (np.sqrt(2.0*np.pi*(1/optdensity)) * RLsigRA)) * np.exp(((-RidgeRDist ** np.float128(2.0)) /(2.0*RLsigRA*RLsigRA)))
-            #RidgeLR = (np.sqrt(optdensity) / (np.sqrt(2.0 * np.pi) * RLsigRA)) * np.exp(((-RidgeRDist ** np.float128(2.0)) /(2.0 * RLsigRA ** np.float128(2.0)))) # 1D Gaussian
-            #RidgeLR = (np.float128(1.0) / (np.float128(2.0) * np.pi * (np.float128(RLsigRA) ** np.float128(2.0)))) * np.exp((-RidgeRDist ** np.float128(2.0)) / (np.float(2.0) * (np.float128(RLsigRA) ** np.float128(2.0)))) # 2D Gaussian
+            ##RidgeLR = (optdensity / (np.float128(2.0) * RidgeY)) * np.exp(((RidgeRDist ** np.float128(2.0)) / np.float128(2.0)) * ((np.float128(2.0) * RidgeY) - np.float128(1.0))) # Best et al
+            #RidgeLR = (np.float128(1.0) / (np.sqrt(2.0*np.pi*(1/optdensity)) * RLsigRA)) * np.exp(((-RidgeRDist ** np.float128(2.0)) /(2.0*RLsigRA*RLsigRA)))
+            ##RidgeLR = (np.sqrt(optdensity) / (np.sqrt(2.0 * np.pi) * RLsigRA)) * np.exp(((-RidgeRDist ** np.float128(2.0)) /(2.0 * RLsigRA ** np.float128(2.0)))) # 1D Gaussian
+            ##RidgeLR = (np.float128(1.0) / (np.float128(2.0) * np.pi * (np.float128(RLsigRA) ** np.float128(2.0)))) * np.exp((-RidgeRDist ** np.float128(2.0)) / (np.float(2.0) * (np.float128(RLsigRA) ** np.float128(2.0)))) # 2D Gaussian
+            ### RM: note I changed RidgeRDist into units of the radio source length 
+            sigmaRidge=0.2 # in unit radio source lengths
+            RidgeLR = (np.float128(1.0) / (np.float128(2.0) * np.pi * (np.float128(sigmaRidge) ** np.float128(2.0)))) * np.exp((-LofarRDist ** np.float128(2.0)) / (np.float128(2.0) * (np.float128(sigmaRidge) ** np.float128(2.0)))) # 2D Gaussian
+
 
             #LofarY = Lambda(LofarSigRA, LofarSigDEC)
 
