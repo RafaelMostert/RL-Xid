@@ -31,14 +31,15 @@ simplefilter('ignore') # there is a matplotlib issue with shading on the graphs
 
 def get_fits(fra,fdec,fsource,fsize):
 
-    sc=SkyCoord(fra*u.deg,fdec*u.deg,frame='icrs')
-    s=sc.to_string(style='hmsdms',sep='',precision=2)
+    #sc=SkyCoord(fra*u.deg,fdec*u.deg,frame='icrs')
+    #s=sc.to_string(style='hmsdms',sep='',precision=2)
     name=fsource
     newsize=2.5*fsize/3600.0
 
-    lm=LofarMaps()
-    mosname=lm.find(fra,fdec)
-    filename=os.environ['IMAGEDIR']+'/'+mosname
+    #lm=LofarMaps()
+    #mosname=lm.find(fra,fdec)
+    #filename=os.environ['IMAGEDIR']+'/'+mosname
+    filename=os.path.join(os.getenv('FIELD_DATA'), os.getenv('IMNAME'))
     try:
         hdu=extract_subim(filename,fra,fdec,newsize)
     except:
@@ -110,8 +111,9 @@ for row in sources:
     flag=get_fits(sra,sdec,ssource,ssize)
 
     cutout=path+'/fits/'+ssource+'.fits'
-    lmd=LofarMaps()
-    dname=os.environ['IMAGEDIR']+'/'+lmd.find(sra,sdec)
+    #lmd=LofarMaps()
+    #dname=os.environ['IMAGEDIR']+'/'+lmd.find(sra,sdec)
+    dname=os.path.join(os.getenv('FIELD_DATA'),os.getenv('IMNAME'))
     if os.path.isfile(dname):
         lhdu=fits.open(dname)
         if flag==0:
