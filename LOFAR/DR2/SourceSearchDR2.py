@@ -1905,7 +1905,8 @@ def LikelihoodRatios(available_sources,debug=False):
             #RidgeRDist = LDistance(RLdelRA, RLdelDEC)
             RidgeRDist = spherical_offset(Ira, Idec, Poss_RA, Poss_DEC)
             if debug: print('RidgeRDist is',RidgeRDist,'arcsec')
-            RidgeY = Lambda(RLsigRA, RLsigDEC)
+            RidgeRDist /= lmsize # RM: turning ridgedistance from arcsec to radio source length units
+            #RidgeY = Lambda(RLsigRA, RLsigDEC)
 
             #optdensity = RLC.optcount / area
             optdensity = 1.0 # test
@@ -1916,7 +1917,7 @@ def LikelihoodRatios(available_sources,debug=False):
             ##RidgeLR = (np.float128(1.0) / (np.float128(2.0) * np.pi * (np.float128(RLsigRA) ** np.float128(2.0)))) * np.exp((-RidgeRDist ** np.float128(2.0)) / (np.float(2.0) * (np.float128(RLsigRA) ** np.float128(2.0)))) # 2D Gaussian
             ### RM: note I changed RidgeRDist into units of the radio source length 
             sigmaRidge=0.2 # in unit radio source lengths
-            RidgeLR = (np.float128(1.0) / (np.float128(2.0) * np.pi * (np.float128(sigmaRidge) ** np.float128(2.0)))) * np.exp((-LofarRDist ** np.float128(2.0)) / (np.float128(2.0) * (np.float128(sigmaRidge) ** np.float128(2.0)))) # 2D Gaussian
+            RidgeLR = (np.float128(1.0) / (np.float128(2.0) * np.pi * (np.float128(sigmaRidge) ** np.float128(2.0)))) * np.exp((-RidgeRDist ** np.float128(2.0)) / (np.float128(2.0) * (np.float128(sigmaRidge) ** np.float128(2.0)))) # 2D Gaussian
 
 
             #LofarY = Lambda(LofarSigRA, LofarSigDEC)
