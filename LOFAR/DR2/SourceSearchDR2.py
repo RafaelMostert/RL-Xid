@@ -985,8 +985,8 @@ def CreateSubCat(source_table, lofarra, lofardec):
 #############################################
 
 def spherical_offset(ra1,dec1,ra2,dec2):
-    "Inputs are coordiantes in deg
-    output is great circle distance separation in arcsec"
+    """Inputs are coordiantes in deg
+    output is great circle distance separation in arcsec"""
     c1 = SkyCoord(ra1, dec1, unit ='deg')  ##  Turn into a pair of 
     c2 = SkyCoord(ra2,dec2, unit= 'deg')  ##  coordinates to use
     return c1.separation(c2).arcsecond

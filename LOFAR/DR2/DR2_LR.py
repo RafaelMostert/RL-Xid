@@ -187,8 +187,8 @@ pwfulldf=Optdf # already in memory
 ColourPW = pwfulldf[~np.isnan(pwfulldf[RLF.OptMagP]) & ~np.isnan(pwfulldf[RLF.OptMagA])].copy()
 ColourPW.reset_index(drop = True, inplace = True)
 ColourPW['Colour'] = ColourPW[RLF.OptMagP].subtract(ColourPW[RLF.OptMagA], axis = 'index')
-ColSam = ColourPW.sample(50000, replace = False)
-
+#ColSam = ColourPW.sample(50000, replace = False)
+ColSam = ColourPW.sample(10000, replace = False) # RM: lowered sample for ~8xspeed improvement
 
 
 '''
@@ -233,13 +233,13 @@ def GetLR2(fr, qm, nm,debug=False):
 
 def Getqmc(m, c):
     qmc = np.exp(kde_h.score_samples(np.array([m, c]).reshape(1, -1)))
-    norm_qmc = qmc * norm_h
+    norm_qmc = qmc * norm_h + 0.05 # RM: the 0.1, roughly 10% of max q(m,c) is for regularisation
     print(f"q(m,c)=q({m},{c})={norm_qmc}")
     return norm_qmc
 
 def Getnmc(m, c):
     nmc = np.exp(kde_o.score_samples(np.array([m, c]).reshape(1, -1)))
-    norm_nmc =  nmc * norm_o
+    norm_nmc =  nmc * norm_o + 0.2 # RM: the 0.4, roughly 10% of max n(m,c) is for regularisation
     print(f"n(m,c)=n({m},{c})={norm_nmc}")
     return norm_nmc
 
