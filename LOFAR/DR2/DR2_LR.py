@@ -231,18 +231,44 @@ def GetLR2(fr, qm, nm,debug=False):
     lr = (fr * qm) / ((nm**1.5)/(np.sqrt(area)*area/(60.0*60.0)))
     return lr
 
-def Getqmc(m, c):
+def Getqmc(m, c, model_error):
     qmc = np.exp(kde_h.score_samples(np.array([m, c]).reshape(1, -1)))
-    norm_qmc = qmc * norm_h + 0.1 # RM: the 0.1, roughly 20% of max q(m,c) is for regularisation
+    norm_qmc = qmc * norm_h + model_error # RM: the model_error roughly 10% of max q(m,c) is for regularisation
     print(f"q(m,c)=q({m},{c})={norm_qmc}")
     return norm_qmc
 
-def Getnmc(m, c):
+def Getnmc(m, c, model_error):
     nmc = np.exp(kde_o.score_samples(np.array([m, c]).reshape(1, -1)))
-    norm_nmc =  nmc * norm_o + 0.4 # RM: the 0.4, roughly 20% of max n(m,c) is for regularisation
+    norm_nmc =  nmc * norm_o + model_error # RM: the model_error roughly 10% of max n(m,c) is for regularisation
     print(f"n(m,c)=n({m},{c})={norm_nmc}")
     return norm_nmc
 
+def Getqmc_unregularised(m, c):
+    qmc = np.exp(kde_h.score_samples(np.array([m, c]).reshape(1, -1)))
+    return qmc * norm_h
+
+def Getnmc_unregularised(m, c):
+    nmc = np.exp(kde_o.score_samples(np.array([m, c]).reshape(1, -1)))
+    return =  nmc * norm_o
+
+# Roughly determine the max qmc and nmc values
+def estimate_maxima(no_samples = 100, q_m_min=16, q_m_max=20, q_c_min=1, q_c_max=3, 
+                    n_m_min=19, n_m_max=22, n_c_min=0, n_c_max=3):
+    """Return estimate of maximum qmc and nmc values. 
+    These values can later be used for regularisation.
+    """
+    m_samples = np.linspace(q_m_min,q_m_max, no_samples)
+    c_samples = np.linspace(q_c_min,q_c_max, no_samples)
+    q_max = np.array([Getqmc_unregularised(m,c) for m,c in zip(m_samples, c_samples)]).max()
+    m_samples = np.linspace(n_m_min,n_m_max, no_samples)
+    c_samples = np.linspace(n_c_min,n_c_max, no_samples)
+    n_max = np.array([Getnmc_unregularised(m,c) for m,c in zip(m_samples, c_samples)]).max()
+    print(f"We find q_max ={q_max:.3f}, and n_max ={n_max:.3f}.")
+    return q_max, n_max
+
+# Get regularisation factors
+q_max, n_max = estimate_maxima(no_samples = 100, q_m_min=16, q_m_max=20, q_c_min=1, q_c_max=3, 
+                    n_m_min=19, n_m_max=22, n_c_min=0, n_c_max=3)
 
 # Calculating the LR from the text files for the W1 band hosts
 
@@ -268,7 +294,9 @@ for asource in source_list:
         newdrop.append(source)
     else:
         
-        MCLR[str(RLF.LRMC)] = MCLR.apply(lambda row: GetLR2(row['Multi_LR'], Getqmc(row[RLF.OptMagA], row['Colour']), Getnmc(row[RLF.OptMagA], row['Colour'])), axis = 1).astype(np.float128)
+        # Regularisation factor is 0.1 times the max value of q or n
+        MCLR[str(RLF.LRMC)] = MCLR.apply(lambda row: GetLR2(row['Multi_LR'], Getqmc(row[RLF.OptMagA], row['Colour'], 0.1*q_max), Getnmc(row[RLF.OptMagA], 
+            row['Colour'], 0.1*n_max)), axis = 1).astype(np.float128)
                 
         MCLR.to_csv(str(RLF.LR) %source, columns = ['LofarRDis', str(RLF.PossRA), str(RLF.PossDEC), str(RLF.IDW), str(RLF.IDP), str(RLF.OptMagP), str(RLF.OptMagA), str(RLF.LRMC)], header = True, index = False)
 

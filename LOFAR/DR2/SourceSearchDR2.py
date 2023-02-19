@@ -1915,7 +1915,7 @@ def LikelihoodRatios(available_sources,debug=False):
             #RidgeLR = (np.float128(1.0) / (np.sqrt(2.0*np.pi*(1/optdensity)) * RLsigRA)) * np.exp(((-RidgeRDist ** np.float128(2.0)) /(2.0*RLsigRA*RLsigRA)))
             ##RidgeLR = (np.sqrt(optdensity) / (np.sqrt(2.0 * np.pi) * RLsigRA)) * np.exp(((-RidgeRDist ** np.float128(2.0)) /(2.0 * RLsigRA ** np.float128(2.0)))) # 1D Gaussian
             ##RidgeLR = (np.float128(1.0) / (np.float128(2.0) * np.pi * (np.float128(RLsigRA) ** np.float128(2.0)))) * np.exp((-RidgeRDist ** np.float128(2.0)) / (np.float(2.0) * (np.float128(RLsigRA) ** np.float128(2.0)))) # 2D Gaussian
-            ### RM: note I changed RidgeRDist into units of the radio source length 
+            ### RM: note I changed RidgeRDist into units of the radio source length and use a single sigmaRidge equal to 0.2 times the radio source length
             sigmaRidge=0.2 # in unit radio source lengths
             RidgeLR = (np.float128(1.0) / (np.float128(2.0) * np.pi * (np.float128(sigmaRidge) ** np.float128(2.0)))) * np.exp((-RidgeRDist ** np.float128(2.0)) / (np.float128(2.0) * (np.float128(sigmaRidge) ** np.float128(2.0)))) # 2D Gaussian
 
