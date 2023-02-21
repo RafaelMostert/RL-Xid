@@ -20,7 +20,7 @@ from sklearn.neighbors import KernelDensity
 import RidgelineFilesDR2 as RLF
 import RLConstantsDR2 as RLC
 from ridge_toolkitDR2 import DefineCutoutHDU, GetAvailableSources, GetCutoutArray
-from SourceSearchDR2 import GetSourceList, SourceInfo, filter_sourcelist, CreateLDistTable, NClosestDistances, GetCatArea, TableFromLofar, CreateSubCat, CreateCutOutCat, LikelihoodRatios
+from SourceSearchDR2 import GetSourceList, SourceInfo, filter_sourcelist, CreateLDistTable, NClosestDistances, GetCatArea, TableFromLofar, CreateSubCat, CreateCutOutCat, LikelihoodRatiosLognormal
 import sys
 from astropy_healpix import HEALPix
 import astropy.units as u
@@ -140,12 +140,12 @@ print('Catalogue area is',area,'sq. arcsec')
 # Generating the likelihood ratios for all possible close sources, for each drawn
 # ridgeline, using the R distance from LOFAR Catalogue position and the ridgeline.
 # Only needs to be done once
-print('Finding LRs')
-LikelihoodRatios(source_list)
+print('Finding LRs. Using lognormal form of f(r).')
+LikelihoodRatiosLognormal(source_list)
 
 ################################### RM: speed hack remove when done comparing ridge dists
-print("WARNING EARLY STOPPING TO CHECK RIDGE SIZES! in DR2_LR.py ADJUST FOR REGULAR RUN!")
-sys.exit(0)
+#print("WARNING EARLY STOPPING TO CHECK RIDGE SIZES! in DR2_LR.py ADJUST FOR REGULAR RUN!")
+#sys.exit(0)
 # CREATE NEAREST 30 INFO
 # Load in the three text files for each source, join all the table information together and save
 # Only needs to be done once
@@ -154,21 +154,21 @@ for asource in source_list:
     source=asource['Source_Name']
     print('Creating nearest 30 tables for',source)
 
-    LofarLR = pd.read_csv(RLF.LLR %source, header = 0)
-    RidgeLR = pd.read_csv(RLF.RLR %source, header = 0, usecols = ['Ridge_LR'])
+    combined_fs = pd.read_csv(RLF.LLR %source, header = 0)
+    #LofarLR = pd.read_csv(RLF.LLR %source, header = 0)
+    #RidgeLR = pd.read_csv(RLF.RLR %source, header = 0, usecols = ['Ridge_LR'])
     MagCutOut = pd.read_csv(RLF.MagCO %source, header = 0, usecols = [RLF.IDW, RLF.IDP, RLF.PossRA, RLF.OptMagA, RLF.OptMagP])
     MagCutOut[str(RLF.PossRA)] = MagCutOut[str(RLF.PossRA)].apply(lambda x: round(x, 7))
             
-    All_LR = LofarLR.join(RidgeLR['Ridge_LR'])
+    All_LR = combined_fs
     # Changed combined to use just the lofar value if the ridge value is nan
-    All_LR['Multi_LR'] = np.where(~np.isnan(All_LR['Ridge_LR']), All_LR['Lofar_LR'].astype(np.float64).multiply(All_LR['Ridge_LR'].astype(np.float64), axis = 'index'), All_LR['Lofar_LR'].astype(np.float64))
         
-    All_LR.columns=['LofarRDis', 'Lofar_LR', str(RLF.PossRA), str(RLF.PossDEC), 'Ridge_LR', 'Multi_LR']
+    All_LR.columns=['combined_distance', 'combined_f', str(RLF.PossRA), str(RLF.PossDEC)]
     All_LR[str(RLF.PossRA)] = All_LR[str(RLF.PossRA)].apply(lambda x: round(x, 7))
             
     MagLR = All_LR.merge(MagCutOut, on = str(RLF.PossRA))
             
-    MagLR.to_csv(RLF.LRI %source, columns = ['LofarRDis', 'Lofar_LR', str(RLF.PossRA), str(RLF.PossDEC), 'Ridge_LR', 'Multi_LR', str(RLF.IDW), str(RLF.IDP), str(RLF.OptMagP), str(RLF.OptMagA)], header = True, index = False)
+    MagLR.to_csv(RLF.LRI %source, columns = ['combined_distance', 'combined_f', str(RLF.PossRA), str(RLF.PossDEC), str(RLF.IDW), str(RLF.IDP), str(RLF.OptMagP), str(RLF.OptMagA)], header = True, index = False)
 
 
 print('Colour LR calculations')
@@ -283,25 +283,21 @@ newdrop=[]
 for asource in source_list:
     source=asource['Source_Name']
             
-    #MLRhw = pd.read_csv(str(RLF.NLRI) %source, header = 0, usecols = ['AllWise', 'LofarRDis', 'ra', 'dec', 'Lofar_LR', 'Ridge_LR', 'SBLR', 'Multi_LR',  'i', 'W1mag'])
-    MLR = pd.read_csv(str(RLF.LRI) %source, header = 0, usecols = ['LofarRDis', str(RLF.PossRA), str(RLF.PossDEC), str(RLF.IDW), str(RLF.IDP), str(RLF.OptMagP), str(RLF.OptMagA), 'Multi_LR'])
+    MLR = pd.read_csv(str(RLF.LRI) %source, header = 0, usecols = ['combined_distance', 'combined_f', str(RLF.PossRA), str(RLF.PossDEC), str(RLF.IDW), str(RLF.IDP), str(RLF.OptMagP), str(RLF.OptMagA)])
     MLR['Col'] = MLR[RLF.OptMagP].subtract(MLR[RLF.OptMagA], axis = 'index')
     MLR['Colour'] = MLR.apply(lambda row: np.where(row[RLF.OptMagP]>0.0,row[RLF.OptMagP]-row[RLF.OptMagA],RLC.meancol),axis=1).astype(np.float128)
     MCLT = MLR[~np.isnan(MLR['Colour'])].copy()
     MCLR = MCLT[~np.isnan(MLR[RLF.OptMagA])].copy()
     print("Source is",source,"and MCLR has length",len(MCLR))
-    #MCLR['MCLLR'] = MCLR.apply(lambda row: GetLR(row['Lofar_LR'], Getqmc(row['W1mag'], row['Colour']), Getnmc(row['W1mag'], row['Colour'])), axis = 1).astype(np.float128)
-    #MCLR['MCRLR'] = MCLR.apply(lambda row: GetLR(row['Ridge_LR'], Getqmc(row['W1mag'], row['Colour']), Getnmc(row['W1mag'], row['Colour'])), axis = 1).astype(np.float128)
-    #MCLRhw['MCSBLR'] = MCLRhw.apply(lambda row: GetLR(row['SBLR'], Getqmcw(row['W1mag'], row['Colour']), Getnmcw(row['W1mag'], row['Colour'])), axis = 1).astype(np.float128)
     if(len(MCLR)<1):
         newdrop.append(source)
     else:
         
         # Regularisation factor is 0.1 times the max value of q or n
-        MCLR[str(RLF.LRMC)] = MCLR.apply(lambda row: GetLR2(row['Multi_LR'], Getqmc(row[RLF.OptMagA], row['Colour'], 0.1*q_max), Getnmc(row[RLF.OptMagA], 
+        MCLR[str(RLF.LRMC)] = MCLR.apply(lambda row: GetLR2(row['combined_f'], Getqmc(row[RLF.OptMagA], row['Colour'], 0.1*q_max), Getnmc(row[RLF.OptMagA], 
             row['Colour'], 0.1*n_max)), axis = 1).astype(np.float128)
                 
-        MCLR.to_csv(str(RLF.LR) %source, columns = ['LofarRDis', str(RLF.PossRA), str(RLF.PossDEC), str(RLF.IDW), str(RLF.IDP), str(RLF.OptMagP), str(RLF.OptMagA), str(RLF.LRMC)], header = True, index = False)
+        MCLR.to_csv(str(RLF.LR) %source, columns = ['combined_distance', str(RLF.PossRA), str(RLF.PossDEC), str(RLF.IDW), str(RLF.IDP), str(RLF.OptMagP), str(RLF.OptMagA), str(RLF.LRMC)], header = True, index = False)
 
 
 source_list=filter_sourcelist(source_list,newdrop)

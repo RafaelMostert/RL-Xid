@@ -89,5 +89,10 @@ LDECd = 42.0 # float, degrees, DEC down the lower value of DEC of the Optical sk
 LDECu = 62.0 # float, degrees, DEC up the upper value of the DEC of the Optical sky area
 bw = 0.5 # Using 0.5 as proposed by Williams et al. 2019 instead of the more varaible 0.2 from Barkus et al. 2022  # Bandwidth of KDE
 SigLC = 0.2 # Lofar centre distribution
+# empirical values of mu and sigma that describe
+# the lognormal that fits to some 900 optical hosts
+# using lofar galaxy zoo
+muLognormal=-3.37 
+sigma2Lognormal=1.28
 Lth = 0.0 # Threshold for declaring a PossFail
 meancol = 1.9

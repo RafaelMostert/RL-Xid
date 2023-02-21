@@ -1815,6 +1815,114 @@ def LengthOnLine(rllength, points, posindex, Ix, Iy):
 
 #############################################
 
+def LikelihoodRatiosLognormal(available_sources,debug=False):
+    
+    """
+    Calculates the likelihood ratio of the n closest sources as determined by
+    the function NClosestRDistances and found in the corresponding .txt files
+    for the R distances to the LOFAR Catalogue position and to the ridgeline.
+    Two seperate .txt files are created for each source containing the AllWise
+    ID, the LOFAR or Ridge R distance, the LOFAR or Ridge Likelihood Ratio and
+    coordinates of the source corresponding to these values.
+    
+    Parameters
+    ----------
+    
+    available_sources - astropy table with sources with successfully drawn ridge lines
+    """
+
+    os.makedirs(os.path.join(os.getenv('TEMP_RESULTS'),'ridgedists'), exist_ok=True)
+    for asource in available_sources:
+        source_name=asource['Source_Name']
+        lofarra = asource['RA']
+        lofardec = asource['DEC']
+        lmsize = asource['Size']/(3600.0*RLC.ddel) # pixels
+
+        if debug: print('Doing source',source_name,'with lmsize',lmsize)
+                
+        file1 = open(RLF.R1 %source_name, 'r')
+        file2 = open(RLF.R2 %source_name, 'r')
+        file7 = open(RLF.NDist %source_name)            
+        hdu = fits.open(RLF.fitscutout + source_name + '-cutout.fits') # refer to cutout file should mean pixels are right
+        header = hdu[0].header
+        if debug: print('cutout image shape is',hdu[0].data.shape)
+        wcs = WCS(header)
+
+        
+        combined_dists = []
+        combined_fs = []
+        PossRA = []
+        PossDEC = []
+
+        for row in file7:
+            row_info = row.strip()
+            row_cols = row_info.split(',')
+            LofarRDist = float(row_cols[0])  ## R Distance to LOFAR from file
+            Poss_RA = float(row_cols[3])  ## RA of point for the R dist and sigmas
+            Poss_DEC = float(row_cols[4])  ## DEC of point for the R dist and sigmas
+            Poss_RA_err = float(row_cols[5])  ## opt err on RA for the point
+            Poss_DEC_err = float(row_cols[6])  ## opt err on the DEC for the point
+            Poss_Coords = SkyCoord(Poss_RA*u.degree, Poss_DEC*u.degree, \
+                        frame = 'fk5')  ##  turn RA and DEC in to a single, degree point
+            Poss_pix = utils.skycoord_to_pixel(Poss_Coords, wcs, origin = 0)  ## convert to pixels
+            Poss_pixx = Poss_pix[0]
+            Poss_pixy = Poss_pix[1]
+            if debug: print('Position of optical source in pix is',Poss_pixx,Poss_pixy)
+            Opt_Poss = np.array([Poss_pixx, Poss_pixy]) ## Combine to an array
+
+            points = GetPointList(file1, file2)[0]  ## Retrieve the list of points along the RL
+            c1, c2 = ClosestPoints(points, Opt_Poss)[:2]  ##  Find the closest two RL points to the host in pixels
+            if debug: print('c1 and c2 are',c1,c2)
+            Ix, Iy = PointOfIntersection(c1, c2, Opt_Poss)  ##  Find the point of intersection along the RL
+            if debug: print('Ix,Iy are',Ix,Iy)
+
+            ##  Turn the adjusted point of intersection into degrees instead of pixels
+            Ideg = utils.pixel_to_skycoord(float(Ix), float(Iy), wcs, origin = 0)
+            Ira = Ideg.ra.degree
+            Idec = Ideg.dec.degree
+
+            if debug:
+                print('Poss_RA is',Poss_RA,'and Poss_DEC is',Poss_DEC)
+                print('Ira is',Ira)
+                print('Idec is',Idec)
+            
+            radRAerr = np.float128(RLC.radraerr)  ##  define the radio errors as zero on the RL
+            radDECerr = np.float128(RLC.raddecerr)  ##  until I know better
+
+            RLsigRA, RLsigDEC = SigmaR(radRAerr, radDECerr, Poss_RA_err, Poss_DEC_err)
+
+            ### RM: might just as well use great circle distance
+            #if debug: print('RLdelRA is',RLdelRA,'and RLdelDEC is',RLdelDEC)
+            RidgeRDist_arcsec = spherical_offset(Ira, Idec, Poss_RA, Poss_DEC)
+            if debug: print('RidgeRDist is',RidgeRDist_arcsec,'arcsec')
+            RidgeRDist = RidgeRDist_arcsec/lmsize # RM: turning ridgedistance from arcsec to radio source length units
+
+            ### RM: Changed to a single combination of Ridge and centroid distance
+            RLC.muLognormal
+            RLC.sigma2Lognormal
+            if not np.isnan(RidgeRDist):
+                combinedDist = (RidgeRDist+LofarRDist)/2
+            else:
+                combinedDist = LofarRDist
+            # Lognormal distribution
+            combined_f = np.exp(-(np.log(combinedDist)-RLC.muLognormal) ** np.float128(2.0) / (np.float128(2.0) * RLC.sigma2Lognormal)) / (combinedDist*np.sqrt(np.float128(2.0) * np.pi * np.float128(RLC.sigma2Lognormal)))
+
+            # Append calculated f(r) to list
+            PossRA.append(Poss_RA)
+            PossDEC.append(Poss_DEC)
+            combined_dists.append(combinedDist)
+            combined_fs.append(combined_f)
+        
+        # Parasitically use the existing structure below to store the combined f(r)
+        LofarData = np.column_stack((combined_dists, combined_fs, PossRA, PossDEC))
+        Lofarcolumns = ['combined_distance', 'combined_f', 'PossRA', 'PossDEC']
+        LofarInfo = Table(LofarData, names = Lofarcolumns, dtype = ('f8', 'f8', 'f8', 'f8'))
+        LofarInfodf = LofarInfo.to_pandas()
+
+        LofarInfodf.to_csv(RLF.LLR %source_name, columns = Lofarcolumns, header = True, index = False)
+
+#############################################
+
 def LikelihoodRatios(available_sources,debug=False):
     
     """
