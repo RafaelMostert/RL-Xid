@@ -143,6 +143,9 @@ print('Catalogue area is',area,'sq. arcsec')
 print('Finding LRs')
 LikelihoodRatios(source_list)
 
+################################### RM: speed hack remove when done comparing ridge dists
+print("WARNING EARLY STOPPING TO CHECK RIDGE SIZES! in DR2_LR.py ADJUST FOR REGULAR RUN!")
+sys.exit(0)
 # CREATE NEAREST 30 INFO
 # Load in the three text files for each source, join all the table information together and save
 # Only needs to be done once
@@ -249,7 +252,7 @@ def Getqmc_unregularised(m, c):
 
 def Getnmc_unregularised(m, c):
     nmc = np.exp(kde_o.score_samples(np.array([m, c]).reshape(1, -1)))
-    return =  nmc * norm_o
+    return nmc * norm_o
 
 # Roughly determine the max qmc and nmc values
 def estimate_maxima(no_samples = 100, q_m_min=16, q_m_max=20, q_c_min=1, q_c_max=3, 

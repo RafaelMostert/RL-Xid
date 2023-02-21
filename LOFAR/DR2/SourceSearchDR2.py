@@ -66,7 +66,9 @@ from astropy.coordinates import SkyCoord
 from astropy.wcs import WCS, utils
 from ridge_toolkitDR2 import GetProblematicSources
 import RLConstantsDR2 as RLC
+import os
 import RidgelineFilesDR2 as RLF
+import pandas as pd
 
 #############################################
 
@@ -1833,6 +1835,7 @@ def LikelihoodRatios(available_sources,debug=False):
     # -- which should always be centred on the LOFAR RA and Dec --
     # rather than the original FITS image.
     
+    os.makedirs(os.path.join(os.getenv('TEMP_RESULTS'),'ridgedists'), exist_ok=True)
     for asource in available_sources:
         source_name=asource['Source_Name']
         lofarra = asource['RA']
@@ -1854,7 +1857,9 @@ def LikelihoodRatios(available_sources,debug=False):
         AllRidgeLR = []
         #AllWISE = []
         LofarDist = []
+        LofarDistArcsec = []
         RidgeDist = []
+        RidgeDistArcsec = []
         PossRA = []
         PossDEC = []
 
@@ -1903,9 +1908,9 @@ def LikelihoodRatios(available_sources,debug=False):
             #RLdelRA, RLdelDEC = DeltaRADEC(Ira, Idec, Poss_RA, Poss_DEC) # inputs are in degree, output is in arcsec
             #if debug: print('RLdelRA is',RLdelRA,'and RLdelDEC is',RLdelDEC)
             #RidgeRDist = LDistance(RLdelRA, RLdelDEC)
-            RidgeRDist = spherical_offset(Ira, Idec, Poss_RA, Poss_DEC)
-            if debug: print('RidgeRDist is',RidgeRDist,'arcsec')
-            RidgeRDist /= lmsize # RM: turning ridgedistance from arcsec to radio source length units
+            RidgeRDist_arcsec = spherical_offset(Ira, Idec, Poss_RA, Poss_DEC)
+            if debug: print('RidgeRDist is',RidgeRDist_arcsec,'arcsec')
+            RidgeRDist = RidgeRDist_arcsec/lmsize # RM: turning ridgedistance from arcsec to radio source length units
             #RidgeY = Lambda(RLsigRA, RLsigDEC)
 
             #optdensity = RLC.optcount / area
@@ -1929,7 +1934,9 @@ def LikelihoodRatios(available_sources,debug=False):
             AllLofarLR.append(LofarLR)
             AllRidgeLR.append(RidgeLR)
             LofarDist.append(LofarRDist)
+            LofarDistArcsec.append(LofarRDist*lmsize)
             RidgeDist.append(RidgeRDist)
+            RidgeDistArcsec.append(RidgeRDist_arcsec)
             PossRA.append(Poss_RA)
             PossDEC.append(Poss_DEC)
                     
@@ -1938,10 +1945,22 @@ def LikelihoodRatios(available_sources,debug=False):
                 
         Lofarcolumns = ['Lofar_R_Distance', 'Lofar_LR', 'PossRA', 'PossDEC']
         LofarInfo = Table(LofarData, names = Lofarcolumns, dtype = ('f8', 'f8', 'f8', 'f8'))
-        Ridgecolumns = ['Ridge_R_Distance', 'Ridge_LR', 'PossRA', 'PossDEC']     
+        Ridgecolumns = ['Ridge_R_Distance', 'Ridge_LR', 'PossRA',
+                'PossDEC']     
         RidgeInfo = Table(RidgeData, names = Ridgecolumns, dtype = ('f8', 'f8', 'f8', 'f8'))
         LofarInfodf = LofarInfo.to_pandas()
         RidgeInfodf = RidgeInfo.to_pandas()
+        # Save distances for calibrating f(r) 
+        Ridgedf= pd.DataFrame({
+            'possOptRA':PossRA, 
+            'possOptDEC':PossDEC, 
+            'ridge_dist':RidgeDist,
+            'rige_dist_arcsec':RidgeDistArcsec,
+            'fluxweighted_dist':LofarDist,
+            'fluxweighted_dist_arcsec':LofarDistArcsec
+            })
+        Ridgedf.to_hdf(os.path.join(os.getenv('TEMP_RESULTS'),'ridgedists',
+            f"{source_name}_ridgedist.h5"),key='df')
         
         LofarInfodf.to_csv(RLF.LLR %source_name, columns = Lofarcolumns, header = True, index = False)
         RidgeInfodf.to_csv(RLF.RLR %source_name, columns = Ridgecolumns, header = True, index = False)

@@ -18,12 +18,15 @@ from astropy.table import Table,vstack,unique
 import sys
 import os
 from astropy_healpix import HEALPix
+import pandas as pd
 import astropy.units as u
 
 overwrite = bool(int(os.getenv('PIPE_OVERWRITE')))
 if os.path.exists(os.path.join(os.getenv('ID_RESULTS'),"radio_filtered.fits")) and not overwrite:
     print("DONE: Files unbatched for ridgeline drawing.")
     exit()
+
+field=os.getenv("FIELD")
 
 rfil=sys.argv[1]
 ofil=sys.argv[2]
@@ -32,9 +35,26 @@ outroot='hp'
 hp = HEALPix(nside=16)
 
 print('Reading catalogues...')
-rcat=Table.read(rfil)
+if rfil.endswith('.fits'):
+    rcat=Table.read(rfil)
+else:
+    rcat=pd.read_hdf(rfil)
+    rcat=rcat[rcat.Mosaic_ID == field]
+    rcat[rcat.Position_from == 'Visual inspection']
+    rcat = Table.from_pandas(rcat)
+    rcat.rename_column('Assoc','LGZ_Assoc')
 ocat=Table.read(ofil)
-ccat=Table.read(cfil)
+if cfil.endswith('.fits'):
+    ccat=Table.read(cfil)
+    try:
+        ccat.rename_column('Parent_Source','Source_Name')
+        ccat=ccat[ccat.Mosaic_ID == field]
+    except:
+        pass
+else:
+    ccat=pd.read_hdf(cfil)
+    ccat=ccat[ccat.Mosaic_ID == field]
+    ccat = Table.from_pandas(ccat)
 
 # Filter radio catalogue for flux and size
 
