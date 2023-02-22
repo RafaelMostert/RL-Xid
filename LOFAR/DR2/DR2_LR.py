@@ -201,25 +201,32 @@ area = (np.deg2rad(RLC.LRAu) - np.deg2rad(RLC.LRAd)) * (np.sin(np.deg2rad(RLC.LD
 
 
 # Not running on i-band so only need the W1 band cells
-hh, ww1 = np.mgrid[Hosts['Colour'].min() : Hosts['Colour'].max() : 0.05, Hosts['W1mag'].min() : Hosts['W1mag'].max() : 0.05]
-h_sample = np.vstack([ww1.ravel(), hh.ravel()]).T
+
+
 h_train = np.vstack([Hosts['W1mag'], Hosts['Colour']]).T
 kde_h = KernelDensity(kernel = 'gaussian', bandwidth = RLC.bw)
 kde_h.fit(h_train)
-prob_h = np.exp(kde_h.score_samples(h_sample))
-norm_h = len(Hosts['W1mag'])/np.sum(prob_h)
 
+if RLC.norm_q:
+    hh, ww1 = np.mgrid[Hosts['Colour'].min() : Hosts['Colour'].max() : 0.05, Hosts['W1mag'].min() : Hosts['W1mag'].max() : 0.05]
+    h_sample = np.vstack([ww1.ravel(), hh.ravel()]).T
+    prob_h = np.exp(kde_h.score_samples(h_sample))
+    norm_q = len(Hosts['W1mag'])/np.sum(prob_h)
+else:
+    norm_q = 1
 
-# In[50]:
-
-
-oo, ww2 = np.mgrid[ColSam['Colour'].min() : ColSam['Colour'].max() : 0.05, ColSam[RLF.OptMagA].min() : ColSam[RLF.OptMagA].max() : 0.05]
-o_sample = np.vstack([ww2.ravel(), oo.ravel()]).T
 o_train = np.vstack([ColSam[RLF.OptMagA], ColSam['Colour']]).T
 kde_o = KernelDensity(kernel = 'gaussian', bandwidth = RLC.bw)
 kde_o.fit(o_train)
-prob_o = np.exp(kde_o.score_samples(o_sample))
-norm_o = len(ColSam[RLF.OptMagA])/np.sum(prob_o)
+
+
+if RLC.norm_n:
+    oo, ww2 = np.mgrid[ColSam['Colour'].min() : ColSam['Colour'].max() : 0.05, ColSam[RLF.OptMagA].min() : ColSam[RLF.OptMagA].max() : 0.05]
+    o_sample = np.vstack([ww2.ravel(), oo.ravel()]).T
+    prob_o = np.exp(kde_o.score_samples(o_sample))
+    norm_n = len(ColSam[RLF.OptMagA])/np.sum(prob_o)
+else:
+    norm_n = 1
 
 
 def GetLR(fr, qm, nm):
@@ -234,25 +241,25 @@ def GetLR2(fr, qm, nm,debug=False):
     lr = (fr * qm) / ((nm**1.5)/(np.sqrt(area)*area/(60.0*60.0)))
     return lr
 
-def Getqmc(m, c, model_error):
+def Getqmc(m, c, model_error,norm=1):
     qmc = np.exp(kde_h.score_samples(np.array([m, c]).reshape(1, -1)))
-    norm_qmc = qmc * norm_h + model_error # RM: the model_error roughly 10% of max q(m,c) is for regularisation
+    norm_qmc = qmc * norm + model_error # RM: the model_error roughly 10% of max q(m,c) is for regularisation
     print(f"q(m,c)=q({m},{c})={norm_qmc}")
     return norm_qmc
 
-def Getnmc(m, c, model_error):
+def Getnmc(m, c, model_error,norm=1):
     nmc = np.exp(kde_o.score_samples(np.array([m, c]).reshape(1, -1)))
-    norm_nmc =  nmc * norm_o + model_error # RM: the model_error roughly 10% of max n(m,c) is for regularisation
+    norm_nmc =  nmc * norm + model_error # RM: the model_error roughly 10% of max n(m,c) is for regularisation
     print(f"n(m,c)=n({m},{c})={norm_nmc}")
     return norm_nmc
 
-def Getqmc_unregularised(m, c):
+def Getqmc_unregularised(m, c, norm=1):
     qmc = np.exp(kde_h.score_samples(np.array([m, c]).reshape(1, -1)))
-    return qmc * norm_h
+    return qmc * norm
 
-def Getnmc_unregularised(m, c):
+def Getnmc_unregularised(m, c, norm=1):
     nmc = np.exp(kde_o.score_samples(np.array([m, c]).reshape(1, -1)))
-    return nmc * norm_o
+    return nmc * norm
 
 # Roughly determine the max qmc and nmc values
 def estimate_maxima(no_samples = 100, q_m_min=16, q_m_max=20, q_c_min=1, q_c_max=3, 
@@ -262,10 +269,10 @@ def estimate_maxima(no_samples = 100, q_m_min=16, q_m_max=20, q_c_min=1, q_c_max
     """
     m_samples = np.linspace(q_m_min,q_m_max, no_samples)
     c_samples = np.linspace(q_c_min,q_c_max, no_samples)
-    q_max = np.array([Getqmc_unregularised(m,c) for m,c in zip(m_samples, c_samples)]).max()
+    q_max = np.array([Getqmc_unregularised(m,c, norm=norm_q) for m,c in zip(m_samples, c_samples)]).max()
     m_samples = np.linspace(n_m_min,n_m_max, no_samples)
     c_samples = np.linspace(n_c_min,n_c_max, no_samples)
-    n_max = np.array([Getnmc_unregularised(m,c) for m,c in zip(m_samples, c_samples)]).max()
+    n_max = np.array([Getnmc_unregularised(m,c, norm=norm_n) for m,c in zip(m_samples, c_samples)]).max()
     print(f"We find q_max ={q_max:.3f}, and n_max ={n_max:.3f}.")
     return q_max, n_max
 
@@ -294,8 +301,9 @@ for asource in source_list:
     else:
         
         # Regularisation factor is 0.1 times the max value of q or n
-        MCLR[str(RLF.LRMC)] = MCLR.apply(lambda row: GetLR2(row['combined_f'], Getqmc(row[RLF.OptMagA], row['Colour'], 0.1*q_max), Getnmc(row[RLF.OptMagA], 
-            row['Colour'], 0.1*n_max)), axis = 1).astype(np.float128)
+        MCLR[str(RLF.LRMC)] = MCLR.apply(lambda row: GetLR2(row['combined_f'],
+            Getqmc(row[RLF.OptMagA], row['Colour'], 0.1*q_maxm, norm=norm_q), Getnmc(row[RLF.OptMagA], 
+            row['Colour'], 0.1*n_max, norm=norm_n)), axis = 1).astype(np.float128)
                 
         MCLR.to_csv(str(RLF.LR) %source, columns = ['combined_distance', str(RLF.PossRA), str(RLF.PossDEC), str(RLF.IDW), str(RLF.IDP), str(RLF.OptMagP), str(RLF.OptMagA), str(RLF.LRMC)], header = True, index = False)
 
