@@ -318,7 +318,10 @@ def FindMax(source):
     info[str(RLF.IDP)] = info[str(RLF.IDP)].map(lambda x: x.strip('b').strip("''"))
     #info[str(RLF.ID3)] = info[str(RLF.ID3)].map(lambda x: x.strip('b').strip("''"))
     CP = info.loc[info[str(RLF.LRMC)].idxmax()].copy()
-    CP['PossFail'] = np.where(CP[str(RLF.LRMC)] < RLC.Lth, 1, 0)
+    # RM: PossFail is not really of added value currently
+    #CP['PossFail'] = np.where(CP[str(RLF.LRMC)] < RLC.Lth, 1, 0)
+    # RM: Adding reliability (assuming Q=0, which is not true, but little impact)
+    CP['ID_R'] = CP[str(RLF.LRMC)] / info[str(RLF.LRMC)].sum()
     CP[str(RLF.LSN)] = source
     
     return CP

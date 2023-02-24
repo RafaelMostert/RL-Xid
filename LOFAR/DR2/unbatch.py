@@ -14,7 +14,7 @@ outrand=root+"_randhosts.fits"
 files=glob.glob(root+"*/hosts.csv")
 print("Unbatching ridgeline output:", files)
 lout=open(outfile,"w")
-lout.write("Source_Name,RA,DEC,UNWISE_OBJID,UID_L,LRMagBoth,PossFail\n")
+lout.write("Source_Name,RA,DEC,UNWISE_OBJID,UID_L,LRMagBoth,ID_R\n")
 for d in files:
     lines=[l.rstrip() for l in open(d).readlines()]
     lines=lines[1:]
@@ -37,7 +37,7 @@ sampsize = min(100, len(gtab))
 #keep=gtab[nums]
 #keep.write(outrand,overwrite=True)
 
-gtab.remove_columns(['UID_L','PossFail'])
+gtab.remove_columns(['UID_L'])
 gtab.rename_column('RA','optRA_RLC')
 gtab.rename_column('DEC','optDEC_RLC')
 
