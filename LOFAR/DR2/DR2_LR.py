@@ -302,7 +302,7 @@ for asource in source_list:
         
         # Regularisation factor is 0.1 times the max value of q or n
         MCLR[str(RLF.LRMC)] = MCLR.apply(lambda row: GetLR2(row['combined_f'],
-            Getqmc(row[RLF.OptMagA], row['Colour'], 0.1*q_maxm, norm=norm_q), Getnmc(row[RLF.OptMagA], 
+            Getqmc(row[RLF.OptMagA], row['Colour'], 0.1*q_max, norm=norm_q), Getnmc(row[RLF.OptMagA], 
             row['Colour'], 0.1*n_max, norm=norm_n)), axis = 1).astype(np.float128)
                 
         MCLR.to_csv(str(RLF.LR) %source, columns = ['combined_distance', str(RLF.PossRA), str(RLF.PossDEC), str(RLF.IDW), str(RLF.IDP), str(RLF.OptMagP), str(RLF.OptMagA), str(RLF.LRMC)], header = True, index = False)
