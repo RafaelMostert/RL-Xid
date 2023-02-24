@@ -336,10 +336,3 @@ print("Writing hosts.csv file to:", RLF.PossHosts)
 PossHostsT.to_csv(RLF.PossHosts, header = True, index = True)#,  columns = [str(RLF.LSN), str(RLF.PossRA), str(RLF.PossDEC), str(RLF.IDW), str(RLF.IDP), str(RLF.ID3), str(RLF.OptMagP), str(RLF.OptMagA)]
 
 
-# In[ ]:
-
-
-# Number of sources with a 0 max LR and therefore would possibly be a failed LR
-# or defined by being closest to LOFAR
-print('Total number of fails is',np.sum(PossHostsT['PossFail']))
-
