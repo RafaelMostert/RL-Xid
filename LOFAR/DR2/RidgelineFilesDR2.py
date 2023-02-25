@@ -93,7 +93,7 @@ LMS = 'LM_size'
 
 # Magnitude and Colour Likelihood Ratio
 #Odata = '/beegfs/lofar/jcroston/surveys/dr2_hosts/pwfull.txt' # Original DR1 optical txt file [not needed?]
-DR1Hosts = os.getenv('DR1Hosts') #'/data1/tap/data/catalogues/originals/HostMagnitude_Info.txt'
+DR2Hosts = os.getenv('DR2Hosts') #'/data1/tap/data/catalogues/originals/HostMagnitude_Info.txt'
 DR1HostsFull = os.getenv('DR1HostsFull') #'/data1/tap/data/catalogues/originals/HostMagnitude_InfoFull.txt'
 MCLR = indir+'/MagnitudeColour/Nearest30AllLRW1band-%s.txt'
 LR = indir+'/MagnitudeColour/AllLRW1bandLR-%s.txt'

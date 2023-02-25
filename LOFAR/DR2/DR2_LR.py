@@ -175,9 +175,13 @@ print('Colour LR calculations')
 
 
 # Load in parent population host info
-Hosts = pd.read_csv(str(RLF.DR1Hosts), usecols = [ 'Source_Name', 'AllWISE', 'Host_RA', 'Host_DEC', 'W1mag', 'i'], header = 0)
-Hosts['r'] = Hosts['i'].apply(lambda y: y + 0.33)
-Hosts['Colour'] = Hosts['r'].astype(np.float64).subtract(Hosts['W1mag'].astype(np.float64), axis = 'index')
+#Hosts = pd.read_csv(str(RLF.DR1Hosts), usecols = [ 'Source_Name', 'AllWISE', 'Host_RA', 'Host_DEC', 'W1mag', 'i'], header = 0)
+#Hosts['r'] = Hosts['i'].apply(lambda y: y + 0.33)
+#Hosts['Colour'] = Hosts['r'].astype(np.float64).subtract(Hosts['W1mag'].astype(np.float64), axis = 'index')
+# Load in parent population host info RM: using legacy R as that will be used for the rest of DR2 instead of panstarrs i
+Hosts = pd.read_csv(str(RLF.DR2Hosts), usecols = [ 'Source_Name', 'W1mag', 'Colour'])
+#Hosts['r'] = Hosts['i'].apply(lambda y: y + 0.33)
+#Hosts['Colour'] = Hosts['r'].astype(np.float64).subtract(Hosts['W1mag'].astype(np.float64), axis = 'index')
 
 
 # In[47]:
