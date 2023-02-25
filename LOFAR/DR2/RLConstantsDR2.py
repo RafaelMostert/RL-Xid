@@ -87,7 +87,7 @@ LRAd = 160.0 # float, degrees, RA down the lower value of RA of the Optical sky 
 LRAu = 232.0 # float, degrees, RA up the upper value of RA of the Optical sky area
 LDECd = 42.0 # float, degrees, DEC down the lower value of DEC of the Optical sky area
 LDECu = 62.0 # float, degrees, DEC up the upper value of the DEC of the Optical sky area
-bw = 0.3 # Using 0.5 as proposed by Williams et al. 2019 instead of the more varaible 0.2 from Barkus et al. 2022  # Bandwidth of KDE
+bw = 0.4 # Using 0.5 as proposed by Williams et al. 2019 instead of the more varaible 0.2 from Barkus et al. 2022  # Bandwidth of KDE
 SigLC = 0.2 # Lofar centre distribution
 # empirical values of mu and sigma that describe
 # the lognormal that fits to some 900 optical hosts
