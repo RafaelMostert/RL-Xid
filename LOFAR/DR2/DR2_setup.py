@@ -19,7 +19,7 @@ from astropy.io import fits
 import glob
 from subim import extract_subim
 from overlay import find_noise_area,find_noise
-from download_image_files import LofarMaps
+#from download_image_files import LofarMaps
 from astropy.coordinates import SkyCoord
 import astropy.units as u
 import time
